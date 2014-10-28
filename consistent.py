@@ -140,6 +140,7 @@ class RedisHashClient(object):
         return client.lpush(name, value)
 
     def rpop(self, name):
+        """shuffle pop redis order"""
         for r in random.sample(self.redis_list, len(self.redis_list)):
             data = r.rpop(name)
             if data:
