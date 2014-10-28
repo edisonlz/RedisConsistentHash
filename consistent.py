@@ -137,10 +137,12 @@ class RedisHashClient(object):
         client = self.consistent_ring[key]
         return client.lpush(name, value)
 
-    def brpop(self, name):
-        key = value
-        client = self.consistent_ring[key]
-        return client.brpop(name)
+    def rpop(self, name):
+        for r in rhclient.redis_list:
+            data = r.rpop(name)
+            if data:
+                return data
+
 
     def llen(self, key):
         client = self.consistent_ring[key]
@@ -158,7 +160,7 @@ if __name__ == "__main__":
     print "initial use:", time.time() - now
 
     now = time.time()
-    test_count = 1000
+    test_count = 100
 
     now = time.time()
     for i in xrange(test_count):
@@ -173,18 +175,22 @@ if __name__ == "__main__":
     print "hget&hset use:", time.time() - now, (time.time() - now) * 1.0 / test_count
 
     now = time.time()
-    test_count = 1000
+    test_count = 10000
+    name = "test_queue_t"
     for i in xrange(test_count):
-        name = "test_queue%s" % i
-        value = "1"
+        value = "1:%s" % i
         rhclient.lpush(name, value)
-        assert value == rhclient.brpop(name)[1]
         if i % 1000 == 0:
             print "deal with:%s" % i
 
-        
-    print "lpush&rpop use:", time.time() - now, (time.time() - now) * 1.0 / test_count
+    for i in xrange(test_count):
+        assert rhclient.rpop(name) != None
 
+    assert rhclient.rpop(name) == None
+    print rhclient.rpop(name)
+    
+    print "lpush&rpop use:", time.time() - now, (time.time() - now) * 1.0 / test_count
+    
     for r in rhclient.redis_list:
         print r.info()["used_memory_human"]
 
