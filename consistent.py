@@ -5,6 +5,8 @@ import redis
 import time
 import logging
 import settings
+import random
+
 
 class ConsistentHashRing(object):
     """Implement a consistent hashing ring."""
@@ -138,7 +140,7 @@ class RedisHashClient(object):
         return client.lpush(name, value)
 
     def rpop(self, name):
-        for r in rhclient.redis_list:
+        for r in random.sample(self.redis_list, len(self.redis_list)):
             data = r.rpop(name)
             if data:
                 return data
@@ -188,9 +190,9 @@ if __name__ == "__main__":
 
     assert rhclient.rpop(name) == None
     print rhclient.rpop(name)
-    
+
     print "lpush&rpop use:", time.time() - now, (time.time() - now) * 1.0 / test_count
-    
+
     for r in rhclient.redis_list:
         print r.info()["used_memory_human"]
 
